@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Hygiene Scanner</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #scanner {
+            width: 85%;
+            max-width: 500px;
+            height: auto;
+            border: 2px solid #333;
+            margin-bottom: 20px;
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #result {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            background-color: #333;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        input {
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            width: 85%;
+            max-width: 500px;
+        }
+        #scanner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            animation: scan 2s infinite;
+        }
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Hand Hygiene Scanner</h1>
+    <video id="scanner" autoplay></video>
+    <div id="result">Scan your hands to check cleanliness</div>
+    <input type="text" id="username" placeholder="Enter your name">
+    <button onclick="startScan()">Start Scan</button>
+    <button onclick="saveResult()">Save</button>
+    <button onclick="retryScan()">Retry</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+    <script>
+        const video = document.getElementById('scanner');
+        const resultDiv = document.getElementById('result');
+        const usernameInput = document.getElementById('username');
+
+        async function startScan() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+
+            const model = await handpose.load();
+            resultDiv.innerText = 'Scanning...';
+
+            video.addEventListener('loadeddata', async () => {
+                const predictions = await model.estimateHands(video);
+                if (predictions.length > 0) {
+                    resultDiv.innerText = 'Hand detected: Clean';
+                } else {
+                    resultDiv.innerText = 'No hand detected';
+                }
+            });
+        }
+
+        function saveResult() {
+            const username = usernameInput.value;
+            if (username) {
+                const result = resultDiv.innerText;
+                alert(`Result saved for ${username}: ${result}`);
+            } else {
+                alert('Please enter your name before saving the result.');
+            }
+        }
+
+        function retryScan() {
+            resultDiv.innerText = 'Scan your hands to check cleanliness';
+        }
+    </script>
+</body>
+</html>
